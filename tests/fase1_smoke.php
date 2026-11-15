@@ -159,6 +159,16 @@ $short = $guest->follow('POST', $base . '/cadastro', [
 check(str_contains($short['body'], 'pelo menos 8 caracteres'), 'senha curta é recusada');
 
 $registerPage = $guest->request('GET', $base . '/cadastro');
+$longMultibyte = $guest->follow('POST', $base . '/cadastro', [
+    '_csrf' => csrf($registerPage['body']),
+    'nome' => 'Senha Multibyte',
+    'email' => 'senha-multibyte@pricehunter.test',
+    'senha' => str_repeat("\xC3\xA1", 37),
+    'senha_confirmacao' => str_repeat("\xC3\xA1", 37),
+]);
+check(str_contains($longMultibyte['body'], 'no máximo 72 bytes'), 'senha acima do limite de bytes é recusada');
+
+$registerPage = $guest->request('GET', $base . '/cadastro');
 $owner = $guest->follow('POST', $base . '/cadastro', [
     '_csrf' => csrf($registerPage['body']),
     'nome' => 'Dono Fase Um',
@@ -228,6 +238,16 @@ $badPassword = $guest->follow('POST', $base . '/perfil/senha', [
     'senha_confirmacao' => 'senha-nova-1',
 ]);
 check(str_contains($badPassword['body'], 'senha atual está incorreta'), 'senha atual errada é recusada');
+
+$profile = $guest->request('GET', $base . '/perfil');
+$longProfilePassword = str_repeat("\xC3\xA1", 37);
+$longProfilePasswordResponse = $guest->follow('POST', $base . '/perfil/senha', [
+    '_csrf' => csrf($profile['body']),
+    'senha_atual' => 'senha-fase-1',
+    'senha' => $longProfilePassword,
+    'senha_confirmacao' => $longProfilePassword,
+]);
+check(str_contains($longProfilePasswordResponse['body'], 'no máximo 72 bytes'), 'nova senha acima do limite de bytes é recusada');
 
 $profile = $guest->request('GET', $base . '/perfil');
 $newPassword = $guest->follow('POST', $base . '/perfil/senha', [

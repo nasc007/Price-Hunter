@@ -90,7 +90,7 @@ final class PerfilController
             ->required('senha_atual', 'a senha atual')
             ->required('senha', 'a nova senha')
             ->minLength('senha', 8, 'A nova senha', false)
-            ->maxLength('senha', 72, 'A nova senha', false)
+            ->maxBytes('senha', 72, 'A nova senha')
             ->confirmed('senha', 'senha_confirmacao', 'A confirmação da nova senha');
 
         if ($validator->fails()) {

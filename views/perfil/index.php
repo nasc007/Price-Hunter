@@ -71,6 +71,7 @@ $whatsapp = Session::old('whatsapp', (string) ($authUser['whatsapp'] ?? ''));
             <div class="mb-3">
                 <label class="form-label" for="senha">Nova senha</label>
                 <input class="form-control<?= invalid_class($errors, 'senha') ?>" type="password" id="senha" name="senha" maxlength="72" autocomplete="new-password" required>
+                <div class="form-text">Mínimo de 8 caracteres; máximo de 72 bytes.</div>
                 <?= field_error($errors, 'senha') ?>
             </div>
             <div class="mb-4">

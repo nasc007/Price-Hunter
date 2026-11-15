@@ -68,7 +68,7 @@ final class AuthController
             ->maxLength('email', 190, 'O e-mail')
             ->required('senha', 'a senha')
             ->minLength('senha', 8, 'A senha', false)
-            ->maxLength('senha', 72, 'A senha', false)
+            ->maxBytes('senha', 72, 'A senha')
             ->confirmed('senha', 'senha_confirmacao', 'A confirmação da senha');
 
         if ($validator->fails()) {

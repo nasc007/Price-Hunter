@@ -31,7 +31,7 @@ use App\Core\Url;
                 <i class="bi bi-eye"></i>
             </button>
         </div>
-        <div class="form-text">Mínimo de 8 caracteres.</div>
+        <div class="form-text">Mínimo de 8 caracteres; máximo de 72 bytes.</div>
         <?= field_error($errors, 'senha') ?>
     </div>
     <div class="mb-4">

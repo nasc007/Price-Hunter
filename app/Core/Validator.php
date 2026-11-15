@@ -69,6 +69,19 @@ final class Validator
         return $this;
     }
 
+    public function maxBytes(string $field, int $max, string $label): self
+    {
+        if (isset($this->errors[$field])) {
+            return $this;
+        }
+
+        if (strlen($this->string($field)) > $max) {
+            $this->errors[$field] = $label . ' pode ter no máximo ' . $max . ' bytes.';
+        }
+
+        return $this;
+    }
+
     public function confirmed(string $field, string $confirmation, string $label): self
     {
         if (isset($this->errors[$field])) {
