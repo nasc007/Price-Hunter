@@ -13,6 +13,7 @@ use App\Core\Url;
 
 $nome = (string) ($authUser['nome'] ?? 'Usuário');
 $inicial = mb_strtoupper(mb_substr($nome, 0, 1));
+$produtosAtivo = str_starts_with(Url::path(), '/produtos');
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -41,9 +42,9 @@ $inicial = mb_strtoupper(mb_substr($nome, 0, 1));
                 <a class="nav-link<?= nav_active('/') ?>" href="<?= e(Url::to('/')) ?>"<?= nav_active('/') !== '' ? ' aria-current="page"' : '' ?>>
                     <i class="bi bi-grid"></i> Painel
                 </a>
-                <span class="nav-link is-disabled" title="Cadastro de produtos na Fase 2">
-                    <i class="bi bi-box-seam"></i> Produtos <small>Fase 2</small>
-                </span>
+                <a class="nav-link<?= $produtosAtivo ? ' is-active' : '' ?>" href="<?= e(Url::to('/produtos')) ?>"<?= $produtosAtivo ? ' aria-current="page"' : '' ?>>
+                    <i class="bi bi-box-seam"></i> Produtos
+                </a>
                 <span class="nav-link is-disabled" title="Ofertas na Fase 5">
                     <i class="bi bi-tags"></i> Ofertas <small>Fase 5</small>
                 </span>

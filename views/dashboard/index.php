@@ -24,6 +24,9 @@ $tipos = [
         <p class="eyebrow">Visão geral</p>
         <h1>Olá, <?= e($primeiro) ?></h1>
         <p class="lead">Os números abaixo vêm do banco. Sem consulta real, não há preço, vendedor ou oferta.</p>
+        <a class="btn btn-gold" href="<?= e(\App\Core\Url::to('/produtos/novo')) ?>">
+            <i class="bi bi-plus-lg"></i> Cadastrar produto
+        </a>
     </div>
     <div class="head-meta">
         <span>Última consulta</span>

@@ -18,6 +18,13 @@ final class Request
         return is_string($value) ? trim($value) : $default;
     }
 
+    public static function query(string $key, string $default = ''): string
+    {
+        $value = $_GET[$key] ?? $default;
+
+        return is_string($value) ? trim($value) : $default;
+    }
+
     public static function raw(string $key): string
     {
         $value = $_POST[$key] ?? '';
