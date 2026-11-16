@@ -12,5 +12,5 @@ if (PHP_VERSION_ID < 80200) {
     exit(1);
 }
 
-fwrite(STDOUT, "atualizar_precos: arquitetura do motor pronta, mas nenhum driver real foi registrado. Nenhuma loja foi consultada e nenhuma oferta foi gravada." . PHP_EOL);
+fwrite(STDOUT, "atualizar_precos: os conectores estão preparados, mas o agendador ainda não está integrado ao motor. Nenhuma loja foi consultada e nenhuma oferta foi gravada." . PHP_EOL);
 exit(0);

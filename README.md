@@ -57,8 +57,9 @@ O script cria contas temporárias `@pricehunter.test`, verifica login, CSRF, iso
 
 ## O que ainda não faz
 
-- Não consulta Mercado Livre, Amazon ou Shopee: ainda não há driver real registrado.
-- `cron/atualizar_precos.php` informa que não há fonte de pesquisa ativa e sai sem consultar lojas ou gravar ofertas.
+- Não consulta o Mercado Livre: a importação automática foi removida.
+- Amazon e feeds JSON têm drivers preparados, mas ficam inativos sem configuração válida; Shopee ainda não tem driver.
+- `cron/atualizar_precos.php` informa que o agendador ainda não está integrado aos conectores e sai sem consultar lojas ou gravar ofertas.
 - `cron/verificar_alertas.php` continua reservado para a Fase 8 e sai sem gravar notificações.
 
 ## Fase 3: arquitetura do motor de pesquisa
@@ -67,7 +68,7 @@ O script cria contas temporárias `@pricehunter.test`, verifica login, CSRF, iso
 - `SearchEngine` coordena os drivers, normaliza as ofertas, remove duplicadas e devolve erros por fonte sem esconder falhas.
 - `OfferNormalizer` valida HTTPS, preço, frete, condição, disponibilidade e moeda; calcula o total somente quando o frete é conhecido.
 - `ProductOfferMatcher` prioriza EAN/GTIN e SKU exatos e, sem esses códigos, compara nome, marca e modelo. Ofertas com EAN divergente são rejeitadas.
-- Nenhum driver de produção está registrado nesta etapa. O motor não faz consultas externas nem cria ofertas artificiais; os testes usam apenas fontes simuladas.
+- Os testes desta fase usam fontes simuladas; nenhum marketplace é consultado por eles.
 
 Para validar essa arquitetura:
 
@@ -75,16 +76,33 @@ Para validar essa arquitetura:
 C:\php\php-8\php.exe tests\fase3_smoke.php
 ```
 
-## Credenciais futuras
+## Fase 4: fontes autorizadas
 
-Quando a integração correspondente for implementada, as chaves entram no `.env` ou na tabela `integracoes`. Nada disso vai para o navegador.
+- `AmazonCreatorsApiDriver` implementa busca pela Creators API, sucessora da PA-API 5. Ele só fica disponível com credenciais válidas de uma conta Associates aprovada e Partner Tag. A elegibilidade e o acesso são controlados pela Amazon e podem exigir vendas qualificadas; confira os requisitos atuais na [documentação oficial](https://affiliate-program.amazon.com/creatorsapi/docs/en-us/onboarding/register-for-creators-api).
+- Para solicitar acesso, participe do [Amazon Associates](https://affiliate-program.amazon.com/), consulte a seção Creators API no Associates Central e obtenha as credenciais e o Partner Tag por lá. O `.env.example` mostra as variáveis; mantenha os valores reais apenas no `.env`, nunca no repositório. A API ainda não é chamada pelo cron e as ofertas não são persistidas.
+- `AuthorizedJsonFeedDriver` lê um arquivo JSON local de uma fonte cuja utilização foi autorizada. Configure `AUTHORIZED_JSON_FEED_PATH` para ativá-lo; caminhos relativos são resolvidos a partir da raiz do projeto. O arquivo deve ser uma lista JSON de ofertas no formato comum aceito por `MarketplaceDriver`, por exemplo:
+
+```json
+[
+  {
+    "titulo": "Produto anunciado",
+    "url": "https://loja.example/produto",
+    "preco": "129.90",
+    "frete_status": "desconhecido",
+    "disponibilidade": "disponivel"
+  }
+]
+```
+
+- Shopee permanece pendente: a Open Platform exige aplicativo e autorização conforme o tipo de catálogo/loja. Sem acesso concedido e sem escopo confirmado, não há driver, scraping nem busca pública simulada.
+- O cron continua deliberadamente sem executar consultas nem gravar ofertas. Credenciais configuradas, por si só, não iniciam pesquisas.
 
 | Fonte | O que configurar |
 | --- | --- |
 | Mercado Livre | Não integrado nesta etapa; é necessário implementar e registrar um driver antes de consultar. |
-| Amazon Brasil | Product Advertising API: access key, secret key, partner tag e região `www.amazon.com.br`. |
-| Shopee Brasil | Aprovação na Open Platform ou no programa de afiliados. |
-| Lojas independentes e de colecionáveis | Feed, API ou permissão explícita do lojista. |
+| Amazon Brasil | Creators API: Credential ID, Credential Secret, versão e Partner Tag no `.env`. A antiga PA-API 5 não é usada. |
+| Shopee Brasil | Aplicativo aprovado e autorização para o catálogo adequado; integração pendente. |
+| Lojas independentes e de colecionáveis | Feed JSON local ou API, com autorização explícita do lojista. |
 | E-mail | Servidor SMTP na Fase 8. |
 | WhatsApp | Provedor oficial autorizado na Fase 8. |
 
