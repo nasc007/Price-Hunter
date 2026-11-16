@@ -12,5 +12,5 @@ if (PHP_VERSION_ID < 80200) {
     exit(1);
 }
 
-fwrite(STDOUT, "atualizar_precos: motor de pesquisa ainda não instalado (Fase 3). Nenhuma loja foi consultada e nenhum preço foi gravado." . PHP_EOL);
+fwrite(STDOUT, "atualizar_precos: arquitetura do motor pronta, mas nenhum driver real foi registrado. Nenhuma loja foi consultada e nenhuma oferta foi gravada." . PHP_EOL);
 exit(0);

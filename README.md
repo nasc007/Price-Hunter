@@ -57,9 +57,23 @@ O script cria contas temporárias `@pricehunter.test`, verifica login, CSRF, iso
 
 ## O que ainda não faz
 
-- Não cadastra produtos. Isso é a Fase 2.
-- Não pesquisa Mercado Livre, Amazon ou Shopee.
-- `cron/atualizar_precos.php` e `cron/verificar_alertas.php` existem para o agendador futuro e saem sem gravar preço ou notificação.
+- Não consulta Mercado Livre, Amazon ou Shopee: ainda não há driver real registrado.
+- `cron/atualizar_precos.php` informa que não há fonte de pesquisa ativa e sai sem consultar lojas ou gravar ofertas.
+- `cron/verificar_alertas.php` continua reservado para a Fase 8 e sai sem gravar notificações.
+
+## Fase 3: arquitetura do motor de pesquisa
+
+- `MarketplaceDriver` define a interface para registrar fontes independentes.
+- `SearchEngine` coordena os drivers, normaliza as ofertas, remove duplicadas e devolve erros por fonte sem esconder falhas.
+- `OfferNormalizer` valida HTTPS, preço, frete, condição, disponibilidade e moeda; calcula o total somente quando o frete é conhecido.
+- `ProductOfferMatcher` prioriza EAN/GTIN e SKU exatos e, sem esses códigos, compara nome, marca e modelo. Ofertas com EAN divergente são rejeitadas.
+- Nenhum driver de produção está registrado nesta etapa. O motor não faz consultas externas nem cria ofertas artificiais; os testes usam apenas fontes simuladas.
+
+Para validar essa arquitetura:
+
+```powershell
+C:\php\php-8\php.exe tests\fase3_smoke.php
+```
 
 ## Credenciais futuras
 
@@ -67,7 +81,7 @@ Quando a integração correspondente for implementada, as chaves entram no `.env
 
 | Fonte | O que configurar |
 | --- | --- |
-| Mercado Livre | Driver da Fase 3. A busca pública não exige chave; afiliado é opcional. |
+| Mercado Livre | Não integrado nesta etapa; é necessário implementar e registrar um driver antes de consultar. |
 | Amazon Brasil | Product Advertising API: access key, secret key, partner tag e região `www.amazon.com.br`. |
 | Shopee Brasil | Aprovação na Open Platform ou no programa de afiliados. |
 | Lojas independentes e de colecionáveis | Feed, API ou permissão explícita do lojista. |
