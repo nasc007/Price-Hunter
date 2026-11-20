@@ -59,7 +59,7 @@ final class ProductOfferMatcher
         }
 
         $digits = preg_replace('/\D+/', '', $value) ?? '';
-        return in_array(strlen($digits), [8, 12, 13, 14], true) ? $digits : '';
+        return GtinValidator::isValid($digits) ? $digits : '';
     }
 
     /** @return list<string> */

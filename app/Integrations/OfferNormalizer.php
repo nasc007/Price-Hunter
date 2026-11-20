@@ -80,9 +80,10 @@ final class OfferNormalizer
             throw new \InvalidArgumentException('Os atributos da oferta não podem ser convertidos para JSON.', 0, $exception);
         }
 
-        $ean = preg_replace('/\D+/', '', self::text($offer['ean'] ?? '', 20)) ?? '';
-        if (!in_array(strlen($ean), [8, 12, 13, 14], true)) {
-            $ean = '';
+        $eanInput = self::text($offer['ean'] ?? '', 20);
+        $ean = preg_replace('/\D+/', '', $eanInput) ?? '';
+        if ($eanInput !== '' && ($ean === '' || !GtinValidator::isValid($ean))) {
+            throw new \InvalidArgumentException('O EAN/GTIN retornado pela fonte é inválido.');
         }
 
         $currency = strtoupper((string) ($offer['moeda'] ?? 'BRL'));

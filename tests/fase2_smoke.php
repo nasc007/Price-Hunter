@@ -153,6 +153,20 @@ try {
     );
 
     $newPage = $owner->request('GET', $base . '/produtos/novo');
+    $invalidCheckDigit = $owner->follow('POST', $base . '/produtos', [
+        '_csrf' => fase2Csrf($newPage['body']),
+        'produtos' => [
+            ['nome' => 'EAN com dígito inválido', 'ean' => '12345678'],
+        ],
+    ]);
+    $count->execute(['usuario_id' => $ownerId]);
+    fase2Check(
+        str_contains($invalidCheckDigit['body'], 'dígito verificador')
+        && (int) $count->fetchColumn() === 0,
+        'cadastro rejeita EAN/GTIN com dígito verificador incorreto'
+    );
+
+    $newPage = $owner->request('GET', $base . '/produtos/novo');
     $listing = $owner->follow('POST', $base . '/produtos', [
         '_csrf' => fase2Csrf($newPage['body']),
         'produtos' => [
@@ -163,7 +177,7 @@ try {
                 'categoria' => 'Miniaturas',
                 'descricao' => 'Miniatura para monitorar',
                 'sku' => 'MGT-MUSTANG-01',
-                'ean' => '12345678',
+                'ean' => '12345670',
                 'url_referencia' => 'https://www.mercadolivre.com.br/mini-gt-ford-mustang/p/MLB11111111?pdp_filters=item_id%3AMLB12345678',
                 'palavras_chave' => 'Ford, Mustang, 1:64',
                 'preco_desejado' => '80.00',
@@ -186,7 +200,8 @@ try {
         $productCount === 2
         && str_contains($listing['body'], 'Mini GT Ford Mustang')
         && str_contains($listing['body'], 'Furadeira de teste')
-        && str_contains($listing['body'], 'Abrir link do produto'),
+        && str_contains($listing['body'], 'Abrir link do produto')
+        && str_contains($listing['body'], 'Comparar preços'),
         'lote válido salva e lista os dois produtos'
     );
 
@@ -197,6 +212,70 @@ try {
     $find->execute(['usuario_id' => $ownerId, 'sku' => 'MGT-MUSTANG-01']);
     $product = $find->fetch();
     $productId = is_array($product) ? (int) $product['id'] : 0;
+    $comparisonPage = $owner->request('GET', $base . '/produtos/' . $productId . '/comparar');
+    fase2Check(
+        $comparisonPage['status'] === 200
+        && str_contains($comparisonPage['body'], 'Comparador de ofertas')
+        && str_contains($comparisonPage['body'], 'Nenhuma oferta foi registrada')
+        && str_contains($comparisonPage['body'], 'Menor custo por condição'),
+        'comparador protegido mostra estado vazio sem inventar ofertas'
+    );
+
+    $marketplaceId = (int) $pdo->query(
+        "SELECT id FROM marketplaces WHERE codigo = 'amazon' LIMIT 1"
+    )->fetchColumn();
+    if ($marketplaceId <= 0) {
+        throw new RuntimeException('Marketplace de teste não encontrado.');
+    }
+    $insertOffer = $pdo->prepare(
+        'INSERT INTO ofertas (
+            produto_id, usuario_id, marketplace_id, id_externo, titulo, loja, condicao, preco,
+            frete, frete_status, desconto, preco_total, disponibilidade, url, moeda, hash_oferta,
+            correspondencia_score, atributos_match, ativa
+         ) VALUES (
+            :produto_id, :usuario_id, :marketplace_id, :id_externo, :titulo, :loja, :condicao, :preco,
+            :frete, :frete_status, :desconto, :preco_total, :disponibilidade, :url, :moeda, :hash_oferta,
+            :correspondencia_score, :atributos_match, 1
+         )'
+    );
+    $comparisonFixtures = [
+        ['Loja Fase 5 A', 'novo', '100.00', '10.00', 'confirmado', '0.00', '110.00'],
+        ['Loja Fase 5 B', 'novo', '100.00', '0.00', 'gratis', '2.00', '98.00'],
+        ['Loja Fase 5 sem frete', 'novo', '20.00', null, 'desconhecido', '0.00', null],
+        ['Loja Fase 5 usada', 'usado', '10.00', '0.00', 'gratis', '0.00', '10.00'],
+    ];
+    foreach ($comparisonFixtures as $index => $fixture) {
+        $insertOffer->execute([
+            'produto_id' => $productId,
+            'usuario_id' => $ownerId,
+            'marketplace_id' => $marketplaceId,
+            'id_externo' => 'fase5-' . $suffix . '-' . $index,
+            'titulo' => $fixture[0],
+            'loja' => $fixture[0],
+            'condicao' => $fixture[1],
+            'preco' => $fixture[2],
+            'frete' => $fixture[3],
+            'frete_status' => $fixture[4],
+            'desconto' => $fixture[5],
+            'preco_total' => $fixture[6],
+            'disponibilidade' => 'disponivel',
+            'url' => 'https://loja.example.test/' . rawurlencode((string) $fixture[0]),
+            'moeda' => 'BRL',
+            'hash_oferta' => hash('sha256', $suffix . '-' . $index),
+            'correspondencia_score' => '100.00',
+            'atributos_match' => '{"metodo":"ean"}',
+        ]);
+    }
+    $populatedComparison = $owner->request('GET', $base . '/produtos/' . $productId . '/comparar');
+    fase2Check(
+        $populatedComparison['status'] === 200
+        && str_contains($populatedComparison['body'], 'R$ 98,00')
+        && str_contains($populatedComparison['body'], 'R$ 10,00')
+        && str_contains($populatedComparison['body'], 'Frete desconhecido')
+        && str_contains($populatedComparison['body'], 'Menor custo'),
+        'comparador ordena custos confirmados por condição e separa frete desconhecido'
+    );
+
     $monitor = $pdo->prepare(
         'SELECT ativo, frequencia_horas, proxima_execucao_em
          FROM monitoramentos WHERE produto_id = :produto_id'
@@ -224,7 +303,7 @@ try {
             'modelo' => 'Ford Mustang 1:64',
             'categoria' => 'Miniaturas',
             'sku' => 'MGT-MUSTANG-01',
-            'ean' => '12345678',
+            'ean' => '12345670',
             'url_referencia' => 'https://www.mercadolivre.com.br/mini-gt-ford-mustang/p/MLB11111111?pdp_filters=item_id%3AMLB12345678',
             'preco_desejado' => '75.50',
             'valor_maximo' => '100.00',
@@ -268,10 +347,12 @@ try {
     ]);
     $otherList = $other->request('GET', $base . '/produtos');
     $forbiddenEdit = $other->request('GET', $base . '/produtos/' . $productId . '/editar');
+    $forbiddenCompare = $other->request('GET', $base . '/produtos/' . $productId . '/comparar');
     fase2Check(
         !str_contains($otherList['body'], 'Mini GT Mustang atualizado')
-        && $forbiddenEdit['status'] === 404,
-        'usuário não lista nem acessa produto de outra conta'
+        && $forbiddenEdit['status'] === 404
+        && $forbiddenCompare['status'] === 404,
+        'usuário não lista, edita ou compara produto de outra conta'
     );
 
     $deletePage = $owner->request('GET', $base . '/produtos');

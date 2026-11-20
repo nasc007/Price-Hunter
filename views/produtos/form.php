@@ -92,7 +92,7 @@ $inputTypes = [
                             <input class="form-control<?= invalid_class($errors, $errorKey) ?>" type="text" id="<?= e($fieldId($field)) ?>" name="<?= e($fieldName($field)) ?>" value="<?= e($fieldValue($field)) ?>" maxlength="<?= $field === 'sku' ? '80' : '20' ?>" aria-describedby="<?= e($fieldId($field)) ?>-help" data-product-field="<?= e($field) ?>">
                             <small class="form-text" id="<?= e($fieldId($field)) ?>-help"><?= $field === 'sku'
                                 ? 'Código interno do fabricante, da loja ou seu para identificar o produto; pode variar entre lojas.'
-                                : 'Número do código de barras (geralmente 8, 12, 13 ou 14 dígitos) que ajuda a identificar o mesmo produto em várias lojas.' ?></small>
+                                : 'Número do código de barras (8, 12, 13 ou 14 dígitos), incluindo dígito verificador válido, que ajuda a identificar o mesmo produto em várias lojas.' ?></small>
                             <?= field_error($errors, $errorKey) ?>
                         </div>
                     <?php endforeach; ?>

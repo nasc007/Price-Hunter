@@ -10,6 +10,9 @@ use App\Core\Request;
 use App\Core\Session;
 use App\Core\Validator;
 use App\Core\View;
+use App\Integrations\GtinValidator;
+use App\Integrations\PriceComparator;
+use App\Models\Oferta;
 use App\Models\Produto;
 
 final class ProdutoController
@@ -133,6 +136,23 @@ final class ProdutoController
         ]);
     }
 
+    public function comparar(string $id): void
+    {
+        $produtoId = $this->parseId($id);
+        $usuarioId = $this->usuarioId();
+        $produto = $produtoId === null ? null : Produto::encontrarDoUsuario($produtoId, $usuarioId);
+        if ($produto === null) {
+            $this->naoEncontrado();
+        }
+
+        $ofertas = Oferta::listarDoProduto($produtoId, $usuarioId);
+        View::render('produtos/comparar', [
+            'title' => 'Comparar preços',
+            'produto' => $produto,
+            'comparacao' => PriceComparator::compare($produto, $ofertas),
+        ]);
+    }
+
     public function atualizar(string $id): void
     {
         $produtoId = $this->parseId($id);
@@ -232,6 +252,10 @@ final class ProdutoController
                 'Informe um valor máximo positivo com até 2 casas decimais usando ponto.'
             );
         $errors = $validator->errors();
+        if ($data['ean'] !== '' && preg_match('/^(?:\d{8}|\d{12,14})$/', $data['ean']) === 1
+            && !GtinValidator::isValid($data['ean'])) {
+            $errors['ean'] = 'O dígito verificador do EAN/GTIN não é válido.';
+        }
 
         foreach (['preco_desejado', 'valor_maximo'] as $field) {
             if ($data[$field] !== '' && preg_match('/^\d{1,10}(?:\.\d{1,2})?$/', $data[$field]) === 1

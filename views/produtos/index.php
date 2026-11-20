@@ -115,6 +115,7 @@ $statusLabels = [
                             </td>
                             <td>
                                 <div class="product-actions">
+                                    <a class="text-link" href="<?= e(Url::to('/produtos/' . $productId . '/comparar')) ?>">Comparar preços</a>
                                     <a class="text-link" href="<?= e(Url::to('/produtos/' . $productId . '/editar')) ?>">Editar</a>
                                     <?php if ($productStatus !== 'arquivado'): ?>
                                         <form method="post" action="<?= e(Url::to('/produtos/' . $productId . '/status')) ?>">

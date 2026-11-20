@@ -115,7 +115,7 @@ fase3Check(
 );
 
 $mismatch = $candidate;
-$mismatch['ean'] = '7891234567888';
+$mismatch['ean'] = '8891234567894';
 $mismatchReport = (new SearchEngine([new Fase3FixtureDriver([$mismatch])]))->search($product);
 fase3Check(
     $mismatchReport['resultados'] === []

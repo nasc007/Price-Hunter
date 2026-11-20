@@ -45,9 +45,9 @@ $produtosAtivo = str_starts_with(Url::path(), '/produtos');
                 <a class="nav-link<?= $produtosAtivo ? ' is-active' : '' ?>" href="<?= e(Url::to('/produtos')) ?>"<?= $produtosAtivo ? ' aria-current="page"' : '' ?>>
                     <i class="bi bi-box-seam"></i> Produtos
                 </a>
-                <span class="nav-link is-disabled" title="Ofertas na Fase 5">
-                    <i class="bi bi-tags"></i> Ofertas <small>Fase 5</small>
-                </span>
+                <a class="nav-link<?= str_starts_with(Url::path(), '/produtos/') && str_ends_with(Url::path(), '/comparar') ? ' is-active' : '' ?>" href="<?= e(Url::to('/produtos')) ?>">
+                    <i class="bi bi-tags"></i> Comparar preços
+                </a>
                 <p class="nav-label">Análise</p>
                 <span class="nav-link is-disabled" title="Histórico e gráficos na Fase 6">
                     <i class="bi bi-graph-up"></i> Histórico <small>Fase 6</small>

@@ -66,8 +66,8 @@ O script cria contas temporárias `@pricehunter.test`, verifica login, CSRF, iso
 
 - `MarketplaceDriver` define a interface para registrar fontes independentes.
 - `SearchEngine` coordena os drivers, normaliza as ofertas, remove duplicadas e devolve erros por fonte sem esconder falhas.
-- `OfferNormalizer` valida HTTPS, preço, frete, condição, disponibilidade e moeda; calcula o total somente quando o frete é conhecido.
-- `ProductOfferMatcher` prioriza EAN/GTIN e SKU exatos e, sem esses códigos, compara nome, marca e modelo. Ofertas com EAN divergente são rejeitadas.
+- `OfferNormalizer` valida HTTPS, preço, frete, condição, disponibilidade, moeda e dígito verificador do GTIN; calcula o total somente quando o frete é conhecido.
+- `ProductOfferMatcher` prioriza EAN/GTIN válido e SKU exatos e, sem esses códigos, compara nome, marca e modelo. Ofertas com GTIN inválido ou divergente não são aceitas como correspondência por código.
 - Os testes desta fase usam fontes simuladas; nenhum marketplace é consultado por eles.
 
 Para validar essa arquitetura:
@@ -105,6 +105,20 @@ C:\php\php-8\php.exe tests\fase3_smoke.php
 | Lojas independentes e de colecionáveis | Feed JSON local ou API, com autorização explícita do lojista. |
 | E-mail | Servidor SMTP na Fase 8. |
 | WhatsApp | Provedor oficial autorizado na Fase 8. |
+
+## Fase 5: comparação de preços, frete e validação
+
+- Cada produto tem uma tela **Comparar preços**, acessível pela lista de produtos. Ela apresenta somente ofertas ativas pertencentes à conta autenticada.
+- O ranking considera apenas ofertas com correspondência de produto de pelo menos 70%, disponibilidade confirmada, moeda BRL e total coerente com preço, frete e desconto. Os menores custos são separados por condição (novo, usado ou recondicionado), sem misturar produtos em estados diferentes.
+- Frete desconhecido ou indisponível não é tratado como grátis nem entra no ranking. O total só é exibido como confirmado quando os componentes conferem.
+- O EAN/GTIN informado no cadastro é validado pelo tamanho e dígito verificador. Respostas de fontes com GTIN inválido são rejeitadas, e identificadores inválidos não são usados para correspondência exata. Ofertas sem condição conhecida também ficam fora do ranking.
+- A tela compara apenas ofertas já registradas no banco. Como o cron e a persistência de integrações ainda não estão ativos, pode não haver resultados; nenhum preço é simulado.
+
+Valide as regras de identificador e comparação com:
+
+```powershell
+C:\php\php-8\php.exe tests\fase5_smoke.php
+```
 
 ## Estrutura
 
